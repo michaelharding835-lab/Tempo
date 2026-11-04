@@ -132,6 +132,11 @@ def get_calendar(year: int | None = None, month: int | None = None):
     return service.calendar(year or today.year, month or today.month)
 
 
+@app.get("/api/muscles", dependencies=[Depends(require_key)])
+def get_muscles(date_: str | None = Query(None, alias="date"), fresh: bool = False):
+    return service.muscles_week(date_, fresh=fresh)
+
+
 @app.get("/api/hyrox", dependencies=[Depends(require_key)])
 def get_hyrox(fresh: bool = False):
     return service.hyrox_history(fresh=fresh)

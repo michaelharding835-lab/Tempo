@@ -39,6 +39,7 @@ def main() -> None:
             y, m = y - 1, m + 12
         out["calendar"][f"{y}-{m}"] = service.calendar(y, m)
     out["hyrox"] = service.hyrox_history()
+    out["muscles"] = service.muscles_week(today.isoformat())
     out["profile"] = service.profile()
     dest = ROOT / "web" / "src" / "demo" / "snapshot.json"
     dest.parent.mkdir(parents=True, exist_ok=True)

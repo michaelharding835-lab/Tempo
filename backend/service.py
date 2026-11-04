@@ -7,6 +7,7 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 from . import hyrox as hx
+from . import muscles as mx
 from . import normalize as n
 from .garmin import cached, call, gather, get_client
 
@@ -246,9 +247,12 @@ def activity(activity_id: Any) -> dict[str, Any]:
         route = n.activity_route(results["details"])
         laps = n.laps(results["splits"])
         sets = None
-        if head["group"] == "strength":
+        session_muscles = None
+        if head["group"] in ("strength", "cardio"):
             try:
-                sets = n.exercise_sets(call("get_activity_exercise_sets", aid))
+                raw_sets = call("get_activity_exercise_sets", aid)
+                sets = n.exercise_sets(raw_sets)
+                session_muscles = mx.from_exercise_sets(raw_sets)[0] or None
             except Exception:  # noqa: BLE001
                 sets = None
         analysis = None
@@ -259,6 +263,7 @@ def activity(activity_id: Any) -> dict[str, Any]:
             analysis = hx.analyse(lap_source, require_pattern=not head["is_hyrox"])
         if analysis:
             head = _mark_hyrox(head, analysis)
+            session_muscles = mx.from_hyrox(analysis) or session_muscles
         return {
             **head,
             "route": route,
@@ -267,6 +272,7 @@ def activity(activity_id: Any) -> dict[str, Any]:
             "hr_zones": n.hr_zones(results["zones"]),
             "weather": n.weather(results["weather"]),
             "sets": sets,
+            "muscles": session_muscles,
             "hyrox": analysis,
             "missing": sorted(errors),
         }
@@ -320,6 +326,58 @@ def hyrox_history(fresh: bool = False) -> dict[str, Any]:
                 "best_total_s": min((s["hyrox"]["total_s"] for s in full), default=None)}
 
     return cached("hyrox_history", TTL_TRAINING, load, fresh=fresh)
+
+
+# ---------------------------------------------------------------- muscles
+
+
+def _session_muscles(a: dict[str, Any], raw_item: dict[str, Any]) -> tuple[dict[str, float], list[str]]:
+    """Muscle totals for one strength/HIIT session, cached per activity."""
+    def load() -> dict[str, Any]:
+        try:
+            totals, unmapped = mx.from_exercise_sets(call("get_activity_exercise_sets", a["id"]))
+        except Exception:  # noqa: BLE001
+            totals, unmapped = {}, []
+        if not totals:
+            totals, unmapped = mx.from_summary(raw_item.get("summarizedExerciseSets"))
+        return {"totals": totals, "unmapped": unmapped}
+
+    hit = cached(f"muscles:{a['id']}", TTL_ACTIVITY, load)
+    return hit["totals"], hit["unmapped"]
+
+
+def muscles_week(day_str: str | None = None, fresh: bool = False) -> dict[str, Any]:
+    """Muscles worked from Monday to `day`: strength sessions plus HYROX stations."""
+    day = _parse_date(day_str)
+    start = day - timedelta(days=day.weekday())
+    end = start + timedelta(days=6)
+
+    def load() -> dict[str, Any]:
+        raw = call("get_activities_by_date", _iso(start), _iso(day)) or []
+        days = {_iso(start + timedelta(days=i)): [] for i in range(7)}
+        unmapped: set[str] = set()
+        for item in raw:
+            a = n.activity_summary(item)
+            d = (a["start_local"] or "")[:10]
+            if d not in days:
+                continue
+            if a["group"] == "strength" or (a["group"] == "cardio" and (item.get("summarizedExerciseSets") or a["sets"])):
+                totals, miss = _session_muscles(a, item)
+                unmapped.update(miss)
+                if totals:
+                    days[d].append({"id": a["id"], "name": a["name"], "kind": "strength", "time": a["start_local"][11:16], "muscles": totals})
+            elif a["possible_hyrox"]:
+                analysis = hyrox_for(a)
+                totals = mx.from_hyrox(analysis)
+                if totals:
+                    days[d].append({"id": a["id"], "name": a["name"], "kind": "hyrox", "time": a["start_local"][11:16], "muscles": totals})
+        for sessions in days.values():
+            sessions.sort(key=lambda x: x["time"])
+        return {"week_start": _iso(start), "week_end": _iso(end), "date": _iso(day),
+                "days": [{"date": d, "sessions": v} for d, v in days.items()],
+                "muscles": mx.MUSCLES, "labels": mx.LABELS, "unmapped": sorted(unmapped)}
+
+    return cached(f"muscles_week:{_iso(day)}", _ttl_for(day), load, fresh=fresh)
 
 
 # ---------------------------------------------------------------- training / performance

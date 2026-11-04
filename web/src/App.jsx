@@ -14,6 +14,7 @@ import Coach from './screens/Coach'
 import Settings, { Customize } from './screens/Settings'
 import Profile from './screens/Profile'
 import HyroxHistory from './screens/Hyrox'
+import MusclesPage from './screens/Muscles'
 import Welcome from './screens/Welcome'
 
 const TABS = [
@@ -34,6 +35,7 @@ const PAGES = {
   customize: Customize,
   profile: Profile,
   hyrox: HyroxHistory,
+  muscles: MusclesPage,
 }
 
 function Page({ entry, onBack }) {

@@ -109,6 +109,26 @@ def get_hyrox_history() -> str:
     return _dump(data)
 
 
+def get_muscle_load(date: str | None = None) -> str:
+    """Hard sets per muscle group this week (Monday to `date`), from strength sessions'
+    exercise sets and HYROX stations, plus muscles not trained yet this week. Use it to
+    suggest what to train next."""
+    data = service.muscles_week(date)
+    strength: dict[str, float] = {}
+    hyrox: dict[str, float] = {}
+    sessions = []
+    for d in data["days"]:
+        for s in d["sessions"]:
+            bucket = strength if s["kind"] == "strength" else hyrox
+            for k, v in s["muscles"].items():
+                bucket[k] = round(bucket.get(k, 0) + v, 1)
+            sessions.append({"date": d["date"], "name": s["name"], "kind": s["kind"], "activity_id": s["id"]})
+    untouched = [data["labels"][m] for m in data["muscles"] if not strength.get(m) and not hyrox.get(m)]
+    return json.dumps({"week": f"{data['week_start']} to {data['week_end']}", "sets_from_strength": strength,
+                       "set_equivalents_from_hyrox": hyrox, "not_trained_yet": untouched, "sessions": sessions,
+                       "unrecognised_exercises": data["unmapped"]}, separators=(",", ":"))
+
+
 def get_profile() -> str:
     """Athlete profile: name, devices, personal records, recent badges, gear mileage and
     lifetime totals."""
@@ -119,7 +139,7 @@ def get_profile() -> str:
 
 TOOLS: list[Callable[..., str]] = [
     get_daily_summary, list_activities, get_activity, get_training_status,
-    get_trend, get_hyrox_history, get_profile,
+    get_trend, get_hyrox_history, get_muscle_load, get_profile,
 ]
 
 # JSON schemas for the coach's local fallback loop.
@@ -132,6 +152,7 @@ SCHEMAS: dict[str, dict[str, Any]] = {
     "get_trend": {"type": "object", "properties": {"metric": {"type": "string"}, "days": {"type": "integer"}},
                   "required": ["metric"]},
     "get_hyrox_history": {"type": "object", "properties": {}},
+    "get_muscle_load": {"type": "object", "properties": {"date": {"type": "string", "description": "YYYY-MM-DD"}}},
     "get_profile": {"type": "object", "properties": {}},
 }
 

@@ -87,6 +87,7 @@ TOOL_LABELS = {
     "get_daily_summary": "Read today's metrics", "list_activities": "Looked through activities",
     "get_activity": "Opened an activity", "get_training_status": "Checked training status",
     "get_trend": "Looked at a trend", "get_hyrox_history": "Reviewed HYROX history",
+    "get_muscle_load": "Checked muscles this week",
     "get_profile": "Checked profile",
 }
 

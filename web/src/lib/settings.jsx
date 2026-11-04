@@ -6,6 +6,7 @@ export const WIDGETS = {
   readiness: { title: 'Training readiness', sizes: ['full'], styles: { gauge: 'Gauge', number: 'Big number' } },
   latest: { title: 'Latest session', sizes: ['full'], styles: { map: 'Map', stats: 'Stats only' }, note: 'Turns into a HYROX breakdown when your latest session was one.' },
   hyrox: { title: 'HYROX (when recent)', sizes: ['full'], styles: { splits: 'Splits', sequence: 'Timeline' }, note: 'Appears for 7 days after a HYROX race or simulation.' },
+  muscles: { title: 'Muscles this week', sizes: ['full'], styles: { body: 'Body map', list: 'List' }, note: 'Fills in from your strength sessions (and HYROX stations, if counted). Resets every Monday.' },
   race: { title: 'Race countdown', sizes: ['full', 'half'], styles: {}, note: 'Set your race date in Settings → HYROX.' },
   sleep: { title: 'Sleep', sizes: ['full', 'half'], styles: { stages: 'Stage map', bar: 'Stage bar', week: 'Week' } },
   body_battery: { title: 'Body Battery', sizes: ['half', 'full'], styles: { curve: 'Curve', ring: 'Ring' } },
@@ -30,6 +31,7 @@ const DEFAULT_TODAY = [
   ['readiness', true, 'full', 'gauge'],
   ['latest', true, 'full', 'map'],
   ['hyrox', true, 'full', 'splits'],
+  ['muscles', true, 'full', 'body'],
   ['race', false, 'full'],
   ['sleep', true, 'full', 'stages'],
   ['body_battery', true, 'half', 'curve'],
@@ -78,6 +80,7 @@ export const DEFAULTS = {
   map: 'streets',
   coach: { about: 'Training for HYROX. I wear a Forerunner 955.' },
   hyrox: { raceDate: '', raceName: '', target: '', division: 'Open' },
+  strength: { worked: 8, hyrox: true },
 }
 
 const KEY = 'tempo:settings'
@@ -100,6 +103,7 @@ function load() {
       activities: { ...DEFAULTS.activities, ...(raw.activities || {}) },
       coach: { ...DEFAULTS.coach, ...(raw.coach || {}) },
       hyrox: { ...DEFAULTS.hyrox, ...(raw.hyrox || {}) },
+      strength: { ...DEFAULTS.strength, ...(raw.strength || {}) },
       today: mergeList(raw.today, DEFAULTS.today),
       health: mergeList(raw.health, DEFAULTS.health),
     }

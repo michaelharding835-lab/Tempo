@@ -69,9 +69,9 @@ fresh data from Garmin.
 
 ## Use your data from Claude Code (and your own assistant)
 
-Your server is a standard Streamable-HTTP MCP server with seven read-only tools
+Your server is a standard Streamable-HTTP MCP server with eight read-only tools
 (`get_daily_summary`, `list_activities`, `get_activity`, `get_training_status`,
-`get_trend`, `get_hyrox_history`, `get_profile`):
+`get_trend`, `get_hyrox_history`, `get_muscle_load`, `get_profile`):
 
 ```bash
 claude mcp add --transport http garmin https://tempo-ben.vercel.app/mcp \
@@ -101,9 +101,22 @@ a Scriptable widget to your home screen.
   history, race predictions, readiness trend, endurance and hill score, lactate
   threshold, heat/altitude acclimation, weekly volume, HYROX history and personal records.
 - **Health** — every daily metric for any day, with 7-day to 1-year trends for each.
+- **Muscles this week** — a front-and-back body map that fills in from your strength
+  sessions (grey → lime → orange → red as sets add up) and resets every Monday. Tap a
+  day to see the week up to that point. HYROX stations can count too.
 - **Coach** — Claude with live access to your data through the MCP server.
 - **Settings** — theme, units, maps, chart style, Today layout, Health order, race
   countdown, coach context, connection and Garmin account.
+
+### How the muscle map works
+Garmin logs each set of a Strength activity with an exercise (for example
+`BENCH_PRESS / INCLINE_DUMBBELL_BENCH_PRESS`). `backend/muscles.py` maps every exercise
+to the muscles it trains: each set counts 1 for the main muscles and 0.5 for the ones
+that assist. A muscle is **light** below 40% of your target, **building** after that and
+**worked** (red) at the target, 8 hard sets a week by default (change it in Settings →
+Strength). Exercises it doesn't recognise are listed on the Muscles page; add them to
+`NAME_RULES` in `backend/muscles.py`. If a set was logged as the wrong exercise, fix it
+in Garmin Connect and the map updates.
 
 ### How HYROX sessions are recognised
 Garmin has no HYROX activity profile, so Tempo looks for any of these:
@@ -144,6 +157,7 @@ backend/garmin.py       Garmin session, token rotation, caching, parallel calls
 backend/service.py      Screen-sized bundles (today, activity, training, trends…)
 backend/normalize.py    Garmin JSON → clean shapes
 backend/hyrox.py        HYROX detection and analysis
+backend/muscles.py      Exercise → muscle mapping for the weekly muscle map
 backend/tools.py        The tool functions (shared by MCP and the coach)
 backend/mcp_server.py   MCP server (Streamable HTTP, stateless)
 backend/coach.py        Claude coach via the MCP connector

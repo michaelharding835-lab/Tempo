@@ -183,3 +183,57 @@ def test_raw_passthrough(client):
     r = client.get("/api/raw/get_user_summary?args=2026-01-05", headers=AUTH)
     assert r.status_code == 200 and "totalSteps" in r.json()
     assert client.get("/api/raw/delete_activity?args=1", headers=AUTH).status_code == 404
+
+
+# ---------------------------------------------------------------- muscle map
+
+from backend import muscles as mx  # noqa: E402
+
+
+@pytest.mark.parametrize("cat,name,primary", [
+    ("BENCH_PRESS", "BARBELL_BENCH_PRESS", "chest"),
+    ("BENCH_PRESS", "CLOSE_GRIP_BARBELL_BENCH_PRESS", "triceps"),
+    ("PULL_UP", "CLOSE_GRIP_LAT_PULLDOWN", "lats"),
+    ("ROW", "FACE_PULL", "rearDelts"),
+    ("DEADLIFT", "ROMANIAN_DEADLIFT", "hamstrings"),
+    ("SQUAT", "WALL_BALL", "quads"),
+    ("CALF_RAISE", "STANDING_CALF_RAISE", "calves"),
+    ("CORE", "RUSSIAN_TWIST", "obliques"),
+])
+def test_exercise_mapping(cat, name, primary):
+    prim, _ = mx.map_exercise(cat, name)
+    assert primary in prim
+
+
+def test_cardio_sets_are_ignored():
+    assert mx.map_exercise("CARDIO", None) is None
+    assert mx.map_exercise("WARM_UP", "JUMPING_JACKS") is None
+
+
+def test_set_counting_primary_full_secondary_half():
+    raw = {"exerciseSets": [
+        {"setType": "ACTIVE", "exercises": [{"category": "CURL", "name": "BARBELL_BICEPS_CURL", "probability": 99}]},
+        {"setType": "REST", "exercises": []},
+        {"setType": "ACTIVE", "exercises": [{"category": "CURL", "name": "BARBELL_BICEPS_CURL", "probability": 99}]},
+    ]}
+    totals, unmapped = mx.from_exercise_sets(raw)
+    assert totals == {"biceps": 2.0, "forearms": 1.0} and not unmapped
+
+
+def test_week_resets_on_monday_and_counts_sessions():
+    w = service.muscles_week()
+    from datetime import date
+    assert date.fromisoformat(w["week_start"]).weekday() == 0 and len(w["days"]) == 7
+    kinds = {s["kind"] for d in w["days"] for s in d["sessions"]}
+    assert "strength" in kinds
+
+
+def test_muscles_endpoint(client):
+    r = client.get("/api/muscles", headers=AUTH)
+    assert r.status_code == 200 and r.json()["muscles"] == mx.MUSCLES
+
+
+def test_strength_activity_has_session_muscles():
+    acts = service.activities(0, 40)["items"]
+    leg = next(a for a in acts if a["group"] == "strength")
+    assert service.activity(leg["id"])["muscles"]

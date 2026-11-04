@@ -59,6 +59,7 @@ export async function get(path) {
     return s.calendar[key] || { year: +q.year, month: +q.month, days: {}, totals: { activities: 0, distance_m: 0, duration_s: 0, load: 0 } }
   }
   if (p === '/api/hyrox') return s.hyrox
+  if (p === '/api/muscles') return s.muscles
   if (p === '/api/profile') return s.profile
   if (p === '/api/settings') return {}
   throw new Error(`Sample data has nothing for ${p}`)

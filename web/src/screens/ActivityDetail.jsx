@@ -6,6 +6,7 @@ import { useApi } from '../lib/hooks'
 import { clock, dayLabel, distance, elevation, hm, isNum, localTime, n, pace, speed, temp } from '../lib/format'
 import { Card, CardHead, CoachLink, ErrorBox, Num, PageHead, Skeleton, SportIcon, Stat, groupMeta } from '../components/ui'
 import { HyroxSequence } from './widgets'
+import { SessionMuscles } from './Muscles'
 
 const minuteTicks = (t) => {
   if (!t?.length) return []
@@ -283,6 +284,7 @@ export default function ActivityDetail({ id }) {
               <Zones zones={a.hr_zones} />
             </Card>
           )}
+          {a.muscles && Object.keys(a.muscles).length > 0 && <SessionMuscles muscles={a.muscles} />}
           {a.sets && <Sets sets={a.sets} />}
           {a.laps?.length > 1 && !a.hyrox && <Laps laps={a.laps} group={a.group} />}
           {dynamics.length > 0 && (

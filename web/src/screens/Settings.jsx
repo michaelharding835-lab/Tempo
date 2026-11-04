@@ -246,6 +246,12 @@ export default function Settings({ section }) {
           <p className="small muted" style={{ margin: '12px 0 0' }}>Turn on the Race countdown card in Customise Today to see it on the home screen.</p>
         </Card>
 
+        <div className="list-label">Strength</div>
+        <div className="list">
+          <Row title="Count HYROX stations" sub="Adds station work to the weekly muscle map"><Switch checked={settings.strength.hyrox} label="Count HYROX stations" onChange={setIn('strength', 'hyrox')} /></Row>
+          <Row title="Muscle counts as worked at" sub="Hard sets per week"><div style={{ width: 170 }}><Seg label="Sets for worked" value={settings.strength.worked} onChange={setIn('strength', 'worked')} options={[[6, '6'], [8, '8'], [10, '10'], [12, '12']]} /></div></Row>
+        </div>
+
         <div className="list-label">Coach</div>
         <Card>
           <label className="field-label" style={{ marginTop: 0 }} htmlFor="about">About you</label>

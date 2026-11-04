@@ -18,6 +18,19 @@ CENTER = (-25.7545, 28.2314)  # Pretoria
 MAX_HR = 196
 HR_ZONE_LOWS = [98, 118, 137, 157, 176]
 
+# Garmin exercise category, exercise name, weight in grams, sets.
+SPLITS = {
+    "push": [("BENCH_PRESS", "BARBELL_BENCH_PRESS", 80000, 4), ("SHOULDER_PRESS", "OVERHEAD_BARBELL_PRESS", 50000, 3),
+             ("BENCH_PRESS", "INCLINE_DUMBBELL_BENCH_PRESS", 28000, 3), ("LATERAL_RAISE", "DUMBBELL_LATERAL_RAISE", 10000, 3),
+             ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN", 30000, 3), ("PUSH_UP", "PUSH_UP", 0, 2)],
+    "pull": [("DEADLIFT", "BARBELL_DEADLIFT", 140000, 3), ("PULL_UP", "WEIGHTED_PULL_UP", 10000, 4),
+             ("ROW", "BENT_OVER_ROW_WITH_BARBELL", 70000, 3), ("ROW", "FACE_PULL", 25000, 3),
+             ("CURL", "BARBELL_BICEPS_CURL", 35000, 3), ("SHRUG", "BARBELL_SHRUG", 100000, 2)],
+    "legs": [("SQUAT", "BARBELL_BACK_SQUAT", 110000, 4), ("DEADLIFT", "ROMANIAN_DEADLIFT", 90000, 3),
+             ("LUNGE", "WALKING_LUNGE", 24000, 3), ("LEG_CURL", "LEG_CURL", 45000, 3),
+             ("CALF_RAISE", "STANDING_CALF_RAISE", 60000, 3), ("CRUNCH", "CABLE_CRUNCH", 40000, 3)],
+}
+
 HYROX_STATIONS = [
     ("SkiErg", 255, 1000),
     ("Sled Push", 205, 50),
@@ -147,6 +160,8 @@ class FakeGarmin:
             specs: list[dict[str, Any]] = []
             if days_ago == 0:
                 specs.append({"kind": "easy_run", "hour": 6.1, "km": 7.2})
+                if wd == 0:
+                    specs.append({"kind": "strength", "hour": 5.2, "split": "push"})
             elif days_ago == 1:
                 specs.append({"kind": "hyrox", "hour": 17.4, "named": True, "label": "HYROX simulation"})
             elif d == race_day:
@@ -155,8 +170,9 @@ class FakeGarmin:
                 specs.append({"kind": "hyrox", "hour": 16.9, "named": False, "label": "Hyrox sim"})
             elif wd == 0:
                 specs.append({"kind": "easy_run", "hour": 6.0, "km": r.uniform(7.5, 9.5)})
+                specs.append({"kind": "strength", "hour": 17.5, "split": "push"})
             elif wd == 1:
-                specs.append({"kind": "strength", "hour": 17.5})
+                specs.append({"kind": "strength", "hour": 17.5, "split": "legs"})
             elif wd == 2:
                 specs.append({"kind": "intervals" if week % 2 == 0 else "tempo", "hour": 6.1})
             elif wd == 3:
@@ -164,6 +180,7 @@ class FakeGarmin:
             elif wd == 4:
                 if week % 2 == 1:
                     specs.append({"kind": "swim", "hour": 6.3})
+                specs.append({"kind": "strength", "hour": 17.4, "split": "pull"})
             elif wd == 5:
                 if r.random() < 0.9:
                     specs.append({"kind": "long_run", "hour": 6.4, "km": r.uniform(13.5, 18.5)})
@@ -212,7 +229,7 @@ class FakeGarmin:
             elev = km * 6
             cadence, power, laps = r.uniform(176, 184), r.uniform(290, 320), 14 if kind == "intervals" else math.ceil(km)
         elif kind == "strength":
-            type_key, name = "strength_training", "Strength"
+            type_key, name = "strength_training", {"push": "Push day", "pull": "Pull day", "legs": "Leg day"}.get(spec.get("split"), "Strength")
             dur = r.uniform(50, 62) * 60
             avg_hr, max_hr = int(r.uniform(108, 120)), int(r.uniform(150, 162))
             te_a, te_an, label = round(r.uniform(1.6, 2.4), 1), round(r.uniform(1.0, 2.0), 1), "ANAEROBIC_CAPACITY"
@@ -295,6 +312,13 @@ class FakeGarmin:
             "_kind": kind,
             "_spec": spec,
         }
+        if kind == "strength":
+            plan = SPLITS.get(spec.get("split") or "legs")
+            item["summarizedExerciseSets"] = [{"category": c, "subCategory": nm, "sets": n, "reps": n * 8,
+                                               "volume": (w or 0) / 1000 * n * 8, "duration": n * 50000}
+                                              for c, nm, w, n in plan]
+            item["totalSets"] = item["activeSets"] = sum(n for *_, n in plan)
+            item["totalReps"] = item["totalSets"] * 8
         return item
 
     def _hyrox_plan(self, day: date, slot: int, race: bool) -> list[dict[str, Any]]:
@@ -609,13 +633,11 @@ class FakeGarmin:
         if a["_kind"] != "strength":
             return {"activityId": a["activityId"], "exerciseSets": None}
         r = _rng("sets", a["activityId"])
-        plan = [("SQUAT", "BARBELL_BACK_SQUAT", 100000), ("DEADLIFT", "ROMANIAN_DEADLIFT", 90000),
-                ("LUNGE", "WALKING_LUNGE", 24000), ("PULL_UP", "PULL_UP", 0),
-                ("BENCH_PRESS", "BARBELL_BENCH_PRESS", 75000), ("PLANK", "PLANK", 0)]
+        plan = SPLITS.get(a["_spec"].get("split") or "legs")
         sets = []
         t = datetime.strptime(a["startTimeGMT"], "%Y-%m-%d %H:%M:%S")
-        for cat, name, weight in plan:
-            for _ in range(3):
+        for cat, name, weight, count in plan:
+            for _ in range(count):
                 reps = int(r.uniform(6, 10)) if cat != "PLANK" else 0
                 dur = r.uniform(30, 60)
                 sets.append({"exercises": [{"category": cat, "name": name, "probability": 98.0}],

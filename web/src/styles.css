@@ -53,6 +53,13 @@
   --f-high: #2a3bff;
   --f-ana: #d6458f;
 
+  /* muscle map: charcoal figure, untouched grey, then lime → orange → red */
+  --m-body: #2f2f2e;
+  --m-none: #5c5c59;
+  --m-1: #e0ff4f;
+  --m-2: #f2683a;
+  --m-3: #e3394f;
+
   /* status (always shipped with a label) */
   --good: #109e62;
   --warn: #d98a00;
@@ -92,6 +99,7 @@
     --s-deep: #5257ea; --s-light: #5e93ea; --s-rem: #d4498f; --s-awake: #c9791a;
     --f-low: #1f98cc; --f-high: #5f6bff; --f-ana: #e05ca5;
     --good: #25b877; --warn: #e0a020; --bad: #f0566a;
+    --m-body: #262628; --m-none: #4c4c4e; --m-1: #e0ff4f; --m-2: #f0784a; --m-3: #f0566a;
   }
 }
 :root[data-theme="dark"] {
@@ -114,6 +122,7 @@
   --s-deep: #5257ea; --s-light: #5e93ea; --s-rem: #d4498f; --s-awake: #c9791a;
   --f-low: #1f98cc; --f-high: #5f6bff; --f-ana: #e05ca5;
   --good: #25b877; --warn: #e0a020; --bad: #f0566a;
+  --m-body: #262628; --m-none: #4c4c4e; --m-1: #e0ff4f; --m-2: #f0784a; --m-3: #f0566a;
 }
 
 * { box-sizing: border-box; }
@@ -407,3 +416,12 @@ textarea.field { height: auto; min-height: 88px; padding: 12px 14px; resize: ver
 .drag-handle { color: var(--ink-3); touch-action: none; padding: 6px; cursor: grab; }
 .kbd-hint { font-family: ui-monospace, monospace; font-size: 12px; background: var(--surface-2); border-radius: 6px; padding: 1px 5px; }
 .code { font-family: ui-monospace, monospace; font-size: 12.5px; background: var(--surface-2); border-radius: 10px; padding: 10px 12px; overflow-x: auto; white-space: pre; }
+
+/* week day picker (muscle map) */
+.days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 2px 0 14px; }
+.day { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0 5px; border-radius: 12px; font-size: 13px; font-weight: 500; color: var(--ink-2); background: var(--surface-2); }
+.day[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.day[disabled] { opacity: 0.35; }
+.day__dot { width: 5px; height: 5px; border-radius: 50%; background: transparent; }
+.day__dot--on { background: var(--m-2); }
+.day[aria-pressed="true"] .day__dot--on { background: var(--m-1); }

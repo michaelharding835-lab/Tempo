@@ -9,6 +9,7 @@ import { RouteShape } from '../charts/map'
 import { clock, compact, dayLabel, relDay, distance, fromISO, hm, isNum, localTime, n, pace, timeOf, todayISO, weekday, weight } from '../lib/format'
 import { useSettings } from '../lib/settings'
 import { Card, CardHead, Num, SportIcon, Stat, StatusTag, groupMeta, useNav } from '../components/ui'
+import { MusclesWidget } from './Muscles'
 
 const levelTone = (level) => ({ Prime: 'blue', High: 'good', Moderate: 'warn', Low: 'bad', Poor: 'bad' }[level] || 'neutral')
 const span = (cfg) => (cfg.size === 'full' ? 'span-2' : '')
@@ -673,7 +674,7 @@ export function WeekWidget({ data, cfg }) {
 }
 
 export const WIDGET_COMPONENTS = {
-  readiness: ReadinessWidget, latest: LatestWidget, hyrox: HyroxWidget, race: RaceWidget, sleep: SleepWidget,
+  readiness: ReadinessWidget, latest: LatestWidget, hyrox: HyroxWidget, muscles: MusclesWidget, race: RaceWidget, sleep: SleepWidget,
   body_battery: BodyBatteryWidget, hrv: HrvWidget, stress: StressWidget, heart_rate: HeartRateWidget,
   steps: StepsWidget, intensity: IntensityWidget, training_status: TrainingStatusWidget, load_focus: LoadFocusWidget,
   next_workout: NextWorkoutWidget, week: WeekWidget, calories: CaloriesWidget, respiration: RespirationWidget,
