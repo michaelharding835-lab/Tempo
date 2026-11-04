@@ -95,12 +95,15 @@ export function LineChart({
   const y1 = yMax ?? hi + span * 0.08
   const x0 = clean.length ? clean[0][0] : 0
   const x1 = clean.length ? clean[clean.length - 1][0] : 1
-  const w = Math.max(10, width - pad.left - pad.right)
+  const ticks = niceTicks(y0, y1, yTicks).filter((t) => t >= y0 && t <= y1)
+  // Leave room on the right for the widest tick label.
+  const labelW = settings.charts.grid && ticks.length ? Math.max(...ticks.map((t) => String(formatY(t)).length)) * 6.4 + 8 : 0
+  const padRight = Math.max(pad.right, Math.min(64, labelW))
+  const w = Math.max(10, width - pad.left - padRight)
   const h = height - pad.top - (showAxis ? pad.bottom : 4)
   const sx = (x) => pad.left + ((x - x0) / (x1 - x0 || 1)) * w
   const sy = (y) => pad.top + (1 - (y - y0) / (y1 - y0 || 1)) * h
   const segs = useMemo(() => segments(clean, gap).map((s) => s.map((p) => [sx(p[0]), sy(p[1])])), [clean, gap, width, y0, y1]) // eslint-disable-line
-  const ticks = niceTicks(y0, y1, yTicks).filter((t) => t >= y0 && t <= y1)
   const smooth = settings.charts.smooth
   const toIndex = (e) => {
     const rect = e.currentTarget.getBoundingClientRect()

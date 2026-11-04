@@ -6,6 +6,7 @@ import { Card, CardHead, CoachLink, ErrorBox, Num, PageHead, Skeleton, Stat, use
 import { HyroxSequence } from './widgets'
 
 const STATIONS = ['SkiErg', 'Sled Push', 'Sled Pull', 'Burpee Broad Jumps', 'Row', 'Farmers Carry', 'Sandbag Lunges', 'Wall Balls']
+const SHORT = { SkiErg: 'Ski', 'Sled Push': 'Push', 'Sled Pull': 'Pull', 'Burpee Broad Jumps': 'BBJ', Row: 'Row', 'Farmers Carry': 'Carry', 'Sandbag Lunges': 'Lunge', 'Wall Balls': 'WB' }
 
 export default function HyroxHistory() {
   const nav = useNav()
@@ -36,7 +37,7 @@ export default function HyroxHistory() {
             <Card>
               <CardHead title="Best time per station" />
               <Columns height={150} color="var(--c-station)" maxBar={20}
-                data={STATIONS.map((s) => ({ key: s, label: s.split(' ')[0].slice(0, 5), value: data.station_bests[s], title: s }))}
+                data={STATIONS.map((s) => ({ key: s, label: SHORT[s], value: data.station_bests[s], title: s }))}
                 format={(v, tip) => (tip ? clock(v) : clock(v))} showValue />
             </Card>
 

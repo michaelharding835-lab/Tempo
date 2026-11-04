@@ -145,7 +145,7 @@ export function MetricPage({ metric, date }) {
         {m.extra && extra.data?.points?.length > 0 && (
           <Card style={{ marginTop: 10 }}>
             <div className="card__head"><span className="card__title">Sleep score</span><span className="small muted">avg {Math.round(extra.data.stats?.avg ?? 0)}</span></div>
-            <Columns height={120} color="var(--c-sleep)" maxBar={+days <= 7 ? 22 : +days <= 28 ? 9 : 3} labelEvery={+days <= 7 ? 1 : 1000} yMax={100}
+            <Columns height={120} color="var(--c-sleep)" maxBar={+days <= 7 ? 22 : +days <= 28 ? 9 : 3} showLabels={+days <= 7} yMax={100}
               data={extra.data.points.map((p) => ({ key: p.date, value: p.value, title: dayLabel(p.date), label: fromISO(p.date).toLocaleDateString('en-GB', { weekday: 'narrow' }) }))} />
           </Card>
         )}
