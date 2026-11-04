@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+.env.*
+!.env.example
+garmin_tokens.json
+web/node_modules/
+web/dist-preview/
+.vercel

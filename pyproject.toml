@@ -1,0 +1,19 @@
+[project]
+name = "tempo"
+version = "1.0.0"
+description = "A personal Garmin app: FastAPI backend, MCP server and AI coach, with an iPhone web app."
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.162",
+  "garminconnect>=0.3.20",
+  "mcp>=2.3",
+  "anthropic>=2.4",
+  "requests>=2.32",
+]
+
+[tool.vercel]
+entrypoint = "app:app"
+
+# Serve the built web app (web/dist) straight from Vercel's CDN.
+[tool.vercel.fastapi.static]
+cdn = true

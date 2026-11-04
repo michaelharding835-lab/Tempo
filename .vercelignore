@@ -1,0 +1,8 @@
+web/node_modules
+web/src
+web/dist-preview
+web/public
+tests
+scripts
+widget
+*.md
