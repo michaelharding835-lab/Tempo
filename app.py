@@ -91,8 +91,17 @@ def health() -> dict[str, Any]:
 
 @app.get("/api/check", dependencies=[Depends(require_key)])
 def check() -> dict[str, Any]:
-    """Confirms the key works and Garmin answers."""
-    return {"ok": True, "profile": service.profile_basic(), **health()}
+    """Confirms the key works. Succeeds before Garmin is linked too, so the phone app
+    can be set up first and Garmin connected from its Settings."""
+    status = health()
+    profile = None
+    garmin_error = None
+    try:
+        profile = service.profile_basic()
+    except (gm.GarminNotConnected, gm.GarminRateLimited) as exc:
+        garmin_error = str(exc)
+        status["garmin_linked"] = False
+    return {**status, "profile": profile, "garmin_error": garmin_error}
 
 
 # ---------------------------------------------------------------- data

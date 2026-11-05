@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, useDragControls } from 'motion/react'
 import { Activity, HeartPulse, House, Sparkles, TrendingUp } from 'lucide-react'
 import { NavContext } from './components/ui'
+import TempoMark from './components/TempoMark'
 import { getConn, onConnChange, readCache, sameOriginHealth, setConn } from './lib/api'
 import { todayISO } from './lib/format'
 import { useSettings } from './lib/settings'
@@ -98,7 +99,7 @@ export default function App() {
     }
   }, [pop, tab])
 
-  if (booting) return <div className="app" style={{ display: 'grid', placeItems: 'center' }}><div className="num num-m muted">Tempo</div></div>
+  if (booting) return <div className="app" style={{ display: 'grid', placeItems: 'center' }}><TempoMark size={88} /></div>
   if (!conn) return <NavContext.Provider value={nav}><Welcome /></NavContext.Provider>
 
   const screens = { today: Today, activities: Activities, training: Training, health: Health, coach: Coach }

@@ -17,53 +17,95 @@ token storage. The coach uses your Anthropic API key (billed per use by Anthropi
 
 ---
 
-## Set it up (about 15 minutes)
+## Set it up on Windows (about 20 minutes)
 
-### 1. Put the code on GitHub
-Create a **private** repository and push this folder to it:
+You need free accounts at github.com and vercel.com, and an Anthropic API key
+(console.anthropic.com) for the coach. Replace `tempo-ben` below with your own
+Vercel project name.
 
-```bash
-cd tempo
-git add -A && git commit -m "Tempo"
-gh repo create tempo --private --source=. --push      # or create it on github.com and push
+### 1. Unzip and make your access key
+1. Right-click `tempo.zip` → **Extract All** → **Extract**. You get `Downloads\tempo`,
+   with `app.py` directly inside.
+2. Open **Anaconda Prompt** and make the app's password:
+   ```
+   python -c "import secrets; print(secrets.token_urlsafe(32))"
+   ```
+   Keep it somewhere you can paste from on your laptop *and* phone (e.g. email it to
+   yourself). You'll use it in Vercel, the Garmin sign-in and the app.
+
+### 2. Put the code on GitHub
+In **PowerShell**:
+```powershell
+winget install --id Git.Git -e
+winget install --id GitHub.cli -e
 ```
+Close PowerShell, open it again, then:
+```powershell
+gh auth login                      # GitHub.com → HTTPS → Yes → Login with a web browser
+cd $HOME\Downloads\tempo
+gh repo create tempo --private --source . --push
+```
+It's done when it prints `https://github.com/<you>/tempo`.
+(VS Code alternative: open the folder → Source Control → **Publish Branch** → private.)
 
-### 2. Deploy to Vercel
-1. Sign in at vercel.com with GitHub → **Add New → Project** → import `tempo`.
-   Vercel detects FastAPI automatically; leave the build settings as they are.
-2. Before deploying, open **Environment Variables** and add:
+### 3. Deploy on Vercel
+1. vercel.com → **Sign Up** → **Continue with GitHub** (Hobby, free).
+2. **Add New… → Project** → **Import** `tempo`. If it isn't listed, use *Adjust GitHub
+   App Permissions* to give Vercel access to the repo.
+3. Name the project (e.g. `tempo-ben` → your app lives at `https://tempo-ben.vercel.app`).
+   **Framework Preset** should say **FastAPI**; leave the build settings alone.
+4. Open **Environment Variables** and add `APP_ACCESS_KEY` (your key from step 1) and
+   `ANTHROPIC_API_KEY`.
+5. **Deploy** and wait for the confetti.
 
-   | Name | Value |
-   |---|---|
-   | `APP_ACCESS_KEY` | a long random string, e.g. the output of `python3 -c "import secrets; print(secrets.token_urlsafe(32))"` — this is the app's password |
-   | `ANTHROPIC_API_KEY` | your key from console.anthropic.com |
+### 4. Add free storage for your Garmin login (required)
+Garmin's login tokens change every time they're used, so the server must save them.
+1. In the project: **Storage** → **Create Database** → **Upstash for Redis** → **Free**
+   plan → a US East region (Vercel runs your server in Washington, D.C. by default) →
+   create it and **connect it to the tempo project**. Leave the environment variable
+   prefix as it is (it adds `KV_REST_API_URL` and `KV_REST_API_TOKEN`).
+2. **Deployments** → `⋯` next to the latest one → **Redeploy**.
+3. Check `https://tempo-ben.vercel.app/api/health`. You want `"store":"upstash"`,
+   `"access_key_set":true` and `"coach":true`. `garmin_linked` stays false until step 5.
 
-3. Click **Deploy**. You get an address like `https://tempo-ben.vercel.app`.
-
-### 3. Add free token storage (required)
-Garmin's refresh tokens change every time they're used, so the server must save them.
-In your Vercel project: **Storage → Create → Upstash for Redis (free)** → connect it to
-the project. This adds `KV_REST_API_URL` and `KV_REST_API_TOKEN`. Then **Deployments →
-⋯ → Redeploy** so the server picks them up.
-
-### 4. Connect your Garmin account
-Garmin often blocks sign-ins that come from cloud servers, so sign in once from your
-laptop and send the tokens to your server:
-
-```bash
+### 5. Connect your Garmin account (from your laptop)
+Garmin often blocks sign-ins from cloud servers, so sign in once from your laptop. In
+**Anaconda Prompt**:
+```
+conda create -n garmin python=3.12 -y
+conda activate garmin
 pip install garminconnect
-python scripts/garmin_login.py --app https://tempo-ben.vercel.app --key YOUR_APP_ACCESS_KEY
+cd %USERPROFILE%\Downloads\tempo
+python scripts\garmin_login.py --app https://tempo-ben.vercel.app --key YOUR_ACCESS_KEY
 ```
+Enter your Garmin email, password (it stays invisible while you type) and the code
+Garmin sends you. It's done when it says **Tokens are saved on your server**. The
+password is used once and never stored.
 
-It asks for your Garmin email, password and MFA code. The password is used once and
-never stored. (You can also run it without `--app`/`--key` and paste the printed tokens
-into the app under **Settings → Garmin account → Paste tokens**, or try **Email &
-password** there, which works when Garmin allows the cloud sign-in.)
+No Python? Open the app on your phone first (step 6), then use **Settings → Garmin
+account → Email & password**. That works when Garmin allows the cloud sign-in.
 
-### 5. Install it on your iPhone
-Open your Vercel address in **Safari** → **Share** → **Add to Home Screen**. Open Tempo
-from the home screen and enter your access key. Done: every time you open it, it pulls
-fresh data from Garmin.
+### 6. Install it on your iPhone
+1. Open `https://tempo-ben.vercel.app` in **Safari**.
+2. Paste your access key → **Connect**. Today fills with your data.
+3. Tap **Share** → **Add to Home Screen** → keep the name **Tempo** (leave *Open as Web
+   App* on if you see it) → **Add**.
+
+Every time you open it from the home screen, it pulls fresh data from Garmin.
+
+### Making changes later
+Edit the code (or ask Claude Code to), then in PowerShell in the folder:
+```powershell
+cd web; npm install; npm run build; cd ..      # only if you changed the app in web/src
+git add -A; git commit -m "Describe the change"; git push
+```
+Vercel redeploys automatically on every push.
+
+### App icon
+The black icon is built in (`web/public/icons`). Lime and blue versions are in
+`web/public/icons/alt`. To switch, copy `alt/lime-apple-touch-icon.png` over
+`icons/apple-touch-icon.png` (and the 512 version over `icon-512.png`) in both
+`web/public` and `web/dist`, push, then remove and re-add the app on your phone.
 
 ---
 
@@ -176,6 +218,9 @@ widget/tempo-widget.js  Scriptable home-screen widget
 | Tokens stop working after a day | Upstash isn't connected; do step 3 and redeploy. |
 | "Garmin asked us to slow down" | Wait a few minutes. Garmin rate-limits heavy use. |
 | Coach says to add `ANTHROPIC_API_KEY` | Add it in Vercel → Settings → Environment Variables, then redeploy. |
+| `/api/health` shows `"store":"memory"` | Upstash isn't connected, or you haven't redeployed since connecting it. |
+| "The access key doesn't match" | Re-paste it with no spaces. If you changed it in Vercel, redeploy first. |
+| The Vercel build fails | Open the deployment → **Build Logs** and copy the red lines into Claude. |
 | The first open of the day is slow | The serverless function is waking up and fetching ~18 Garmin endpoints; it takes a few seconds. |
 
 ## Notes

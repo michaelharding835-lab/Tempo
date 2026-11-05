@@ -237,3 +237,16 @@ def test_strength_activity_has_session_muscles():
     acts = service.activities(0, 40)["items"]
     leg = next(a for a in acts if a["group"] == "strength")
     assert service.activity(leg["id"])["muscles"]
+
+
+def test_check_works_before_garmin_is_linked(client, monkeypatch):
+    from backend import garmin as gm_mod
+
+    def boom():
+        raise gm_mod.GarminNotConnected("Garmin is not connected yet.")
+
+    monkeypatch.setattr(service, "profile_basic", boom)
+    r = client.get("/api/check", headers=AUTH)
+    assert r.status_code == 200
+    body = r.json()
+    assert body["garmin_linked"] is False and body["profile"] is None and body["garmin_error"]

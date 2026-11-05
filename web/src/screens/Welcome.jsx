@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { clearCache, probe, setConn } from '../lib/api'
+import TempoMark from '../components/TempoMark'
 
 // Shown the first time the app opens on its own server: ask for the access key.
 export default function Welcome() {
@@ -20,7 +21,8 @@ export default function Welcome() {
     <div className="scroller" style={{ paddingBottom: 40 }}>
       <div className="wrap" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingTop: 40 }}>
         <div className="card card--hero" style={{ padding: 28 }}>
-          <div className="num num-hero" style={{ fontSize: 64 }}>Tempo</div>
+          <TempoMark size={72} bg="#1c1c1e" />
+          <div className="num num-hero" style={{ fontSize: 64, marginTop: 18 }}>Tempo</div>
           <p className="lead" style={{ margin: '14px 0 0' }}>Your Garmin data, pulled fresh every time you open the app.</p>
         </div>
         <label className="field-label" htmlFor="welcome-key" style={{ marginTop: 24 }}>Access key</label>
