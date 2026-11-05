@@ -104,21 +104,27 @@ export function ErrorBox({ error, onRetry }) {
   const nav = useNav()
   const code = error?.code
   const title = {
-    garmin_not_connected: 'Garmin isn’t connected yet',
+    garmin_not_connected: 'Connect your Garmin',
     bad_key: 'The access key doesn’t match',
     no_access_key: 'The server needs an access key',
     garmin_rate_limited: 'Garmin asked us to slow down',
     offline: 'You’re offline',
   }[code] || 'Couldn’t load this'
+  const body = {
+    garmin_not_connected: 'Run the Garmin sign-in script on your laptop, or sign in from Settings → Garmin account. Then pull down to refresh.',
+    bad_key: 'Paste the APP_ACCESS_KEY from Vercel again in Settings → Connection.',
+  }[code] || error?.message || 'Something went wrong.'
+  const fix = ['garmin_not_connected', 'bad_key', 'no_access_key'].includes(code)
   return (
     <div className="error">
       <h3>{title}</h3>
-      <p className="lead" style={{ margin: '0 0 14px' }}>{error?.message || 'Something went wrong.'}</p>
-      <div className="row">
-        {onRetry && <button type="button" className="btn btn--soft" style={{ height: 42 }} onClick={onRetry}><RefreshCw size={16} />Try again</button>}
-        {['garmin_not_connected', 'bad_key', 'no_access_key'].includes(code) && (
-          <button type="button" className="btn" style={{ height: 42 }} onClick={() => nav.push('settings', { section: 'connection' })}>Open connection settings</button>
+      <p className="lead" style={{ margin: '0 0 14px' }}>{body}</p>
+      <div className="row" style={{ flexWrap: 'wrap' }}>
+        {fix && (
+          <button type="button" className="btn" style={{ height: 42, flex: '1 1 auto', width: 'auto' }}
+            onClick={() => nav.push('settings', { section: 'connection' })}>{code === 'garmin_not_connected' ? 'Open Settings' : 'Fix connection'}</button>
         )}
+        {onRetry && <button type="button" className="btn btn--soft" style={{ height: 42, flex: '1 1 auto', width: 'auto' }} onClick={onRetry}><RefreshCw size={16} />Try again</button>}
       </div>
     </div>
   )

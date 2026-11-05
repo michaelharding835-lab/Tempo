@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { LayoutGrid, RefreshCw, Settings } from 'lucide-react'
+import { LayoutGrid, RefreshCw, Settings, User } from 'lucide-react'
 import { useApi, usePullToRefresh } from '../lib/hooks'
 import { isDemo } from '../lib/api'
 import { dayLabel, greeting, relative, todayISO } from '../lib/format'
@@ -10,7 +10,7 @@ import { WIDGET_COMPONENTS } from './widgets'
 export function initial() {
   let name = ''
   try { name = localStorage.getItem('tempo:name') || '' } catch { /* ignore */ }
-  return (name || 'Me').trim().charAt(0).toUpperCase()
+  return name.trim() ? name.trim().charAt(0).toUpperCase() : <User size={18} />
 }
 
 export function Header({ title, sub, at, refreshing, right }) {
